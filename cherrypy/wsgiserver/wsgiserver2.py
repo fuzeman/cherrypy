@@ -214,6 +214,8 @@ import logging
 if not hasattr(logging, 'statistics'):
     logging.statistics = {}
 
+log = logging.getLogger(__name__)
+
 
 def read_headers(rfile, hdict=None):
     """Read headers from the given stream into the given header dict.
@@ -2277,7 +2279,15 @@ class WSGIGateway(Gateway):
                     if isinstance(chunk, unicodestr):
                         chunk = chunk.encode('ISO-8859-1')
                     self.write(chunk)
+
+            log.debug('Finished writing chunks to socket')
+        except socket.timeout, ex:
+            log.info('Socket timeout occurred while writing response - ex: "%s"', ex)
+        except Exception, ex:
+            log.warn('Exception raised while writing response - ex: "%s" %s', ex, traceback.format_exc())
         finally:
+            log.debug('Response complete, closing socket.')
+
             if hasattr(response, "close"):
                 response.close()
 
